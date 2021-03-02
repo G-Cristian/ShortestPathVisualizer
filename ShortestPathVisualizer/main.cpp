@@ -1,10 +1,12 @@
+//first add OpenGL includes
+#include <GL/glew.h>
+#include <OpenGLWrapper.h>
 
 #include "Camera.h"
 #include "Button.h"
+#include "WindowClickNotifier.h"
 
-#include <OpenGLWrapper.h>
 
-#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -23,19 +25,31 @@ const double secondsPerFrame = 1.0 / fps;
 
 /*************  GLOBALS  ****************/
 
+std::unique_ptr<WindowClickNotifier> windowClickNotifier;
+
 GLuint vao;
 GLuint renderingProgram;
 
 Camera camera;
-std::unique_ptr<Button> btnAStar;
+std::shared_ptr<Button> btnAStar;
+std::shared_ptr<Button> btnDijkstra;
+
+GLuint dijkstraNotClickedTexture = 0;
+GLuint dijkstraClickedTexture = 0;
+
+GLuint aStarNotClickedTexture = 0;
+GLuint aStarClickedTexture = 0;
+
+bool dijkstra = true;
 
 /***********  END GLOBALS  **************/
 
 
 /************  FUNCTIONS  ***************/
 void window_reshape_callback(GLFWwindow* window, int newWidth, int newHeight);
-
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void init(GLFWwindow*);
+void createDijkstraButton();
 void createAStarButton();
 void display(GLFWwindow*, double dt);
 
@@ -44,6 +58,13 @@ void createButtonRenderingProgram(const std::string& vertShaderFile, const std::
 void drawButton(const Button& button, GLFWwindow* window);
 
 /**********  END FUNCTIONS  *************/
+
+/*************  EVENTS  *****************/
+
+void onDijkstraClick(Button*);
+void onAStarClick(Button*);
+
+/***********  END EVENTS  ***************/
 
 int main() {
 	if (!glfwInit()) {
@@ -100,6 +121,14 @@ void window_reshape_callback(GLFWwindow* window, int newWidth, int newHeight) {
 	camera.resetCamera(newWidth, newHeight);
 }
 
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		double x = 0.0, y = 0.0;
+		glfwGetCursorPos(window, &x, &y);
+		windowClickNotifier->notify(x,y);
+	}
+}
+
 void init(GLFWwindow* window) {
 	//sets the clearing color
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -118,19 +147,38 @@ void init(GLFWwindow* window) {
 	glfwGetFramebufferSize(window, &width, &height);
 	camera.resetCamera(width, height);
 
-	//creates starButton
+	windowClickNotifier = std::unique_ptr<WindowClickNotifier>(new WindowClickNotifier(window));
+
+	//creates buttons
+	dijkstra = true;
+	createDijkstraButton();
 	createAStarButton();
+
+	//after creating everything set the mouse button callback in order to listen to clicks
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+}
+
+void createDijkstraButton() {
+	dijkstraNotClickedTexture = loadImage("D.bmp");
+	dijkstraClickedTexture = loadImage("D_sel.bmp");
+	btnDijkstra = std::make_shared<Button>(dijkstraClickedTexture, 0.6f, 0.1f, 30.0f, 30.0f);
+	windowClickNotifier->addObserver(btnDijkstra);
+	btnDijkstra->addClickListener(onDijkstraClick);
 }
 
 void createAStarButton() {
-	GLuint txtAStar = loadImage("A_Star.bmp");
-	btnAStar = std::unique_ptr<Button>(new Button(txtAStar, 0.75f, 0.3f, 30.0f, 30.0f));
+	aStarNotClickedTexture = loadImage("A_Star.bmp");
+	aStarClickedTexture = loadImage("A_Star_sel.bmp");
+	btnAStar = std::make_shared<Button>(aStarNotClickedTexture, 0.65f, 0.1f, 30.0f, 30.0f);
+	windowClickNotifier->addObserver(btnAStar);
+	btnAStar->addClickListener(onAStarClick);
 }
 
 void display(GLFWwindow* window, double dt) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
+	drawButton(*btnDijkstra, window);
 	drawButton(*btnAStar, window);
 }
 
@@ -203,4 +251,24 @@ void drawButton(const Button& button, GLFWwindow* window) {
 	//glFrontFace(GL_CW);
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void onDijkstraClick(Button* button) {
+	std::cout << "Dijkstra clicked" << std::endl;
+	if (!dijkstra) {
+		button->texture() = dijkstraClickedTexture;
+		btnAStar->texture() = aStarNotClickedTexture;
+	}
+
+	dijkstra = true;
+}
+
+void onAStarClick(Button* button) {
+	std::cout << "A* clicked" << std::endl;
+	if (dijkstra) {
+		button->texture() = aStarClickedTexture;
+		btnDijkstra->texture() = dijkstraNotClickedTexture;
+	}
+
+	dijkstra = false;
 }

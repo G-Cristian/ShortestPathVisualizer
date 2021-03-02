@@ -1,12 +1,16 @@
 #pragma once
 
+#include "ButtonClickNotifier.h"
+#include "IClickable.h"
+
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
-class Button
+class Button:public IClickable
 {
 public:
 	Button(GLuint texture, float x, float y, float width = 10.0f, float height = 10.0f) :
+		IClickable(),
 		_texture(texture),
 		_verticesVBO(0),
 		_textureVBO(0),
@@ -17,7 +21,7 @@ public:
 		createButton();
 	}
 
-	~Button() = default;
+	virtual ~Button() = default;
 
 	const GLuint& texture() const { return _texture; }
 	GLuint& texture() { return _texture; }
@@ -35,6 +39,12 @@ public:
 	const int& index() const { return _index; }
 	int& index() { return _index; }
 
+	//onButtonClick notifier methods
+	void addClickListener(onButtonClick);
+
+	//override methods
+	void onCLick(GLFWwindow* window, float x, float y) override final;
+
 private:
 	void createButton();
 
@@ -46,5 +56,7 @@ private:
 	glm::vec2 _size;
 
 	int _index;
+
+	ButtonClickNotifier _buttonClickNotifier;
 };
 
