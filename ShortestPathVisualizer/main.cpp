@@ -41,7 +41,7 @@ void display(GLFWwindow*, double dt);
 
 GLuint loadImage(const std::string& file);
 void createButtonRenderingProgram(const std::string& vertShaderFile, const std::string& fragShaderFile);
-void drawButton(const Button& button);
+void drawButton(const Button& button, GLFWwindow* window);
 
 /**********  END FUNCTIONS  *************/
 
@@ -115,7 +115,7 @@ void init(GLFWwindow* window) {
 	//creates camera
 	int width, height;
 
-	glfwGetWindowSize(window, &width, &height);
+	glfwGetFramebufferSize(window, &width, &height);
 	camera.resetCamera(width, height);
 
 	//creates starButton
@@ -124,14 +124,14 @@ void init(GLFWwindow* window) {
 
 void createAStarButton() {
 	GLuint txtAStar = loadImage("A_Star.bmp");
-	btnAStar = std::unique_ptr<Button>(new Button(txtAStar, 400.0f, 300.0f, 30, 30));
+	btnAStar = std::unique_ptr<Button>(new Button(txtAStar, 0.75f, 0.3f, 30.0f, 30.0f));
 }
 
 void display(GLFWwindow* window, double dt) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	drawButton(*btnAStar);
+	drawButton(*btnAStar, window);
 }
 
 GLuint loadImage(const std::string& file) {
@@ -164,14 +164,18 @@ void createButtonRenderingProgram(const std::string& vertShaderFile, const std::
 	std::cout << "createButtonRenderingProgram returnCode: " << returnCode  << std::endl;
 	std::cout << "createButtonRenderingProgram returnMsg: " << returnMsg << std::endl;
 }
-void drawButton(const Button& button) {
+
+void drawButton(const Button& button, GLFWwindow* window) {
 	std::string error;
+
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(window, &width, &height);
 
 	glUseProgram(renderingProgram);
 
 	GLuint mvpMatrixLoc = glGetUniformLocation(renderingProgram, "mvpMatrix");
 	
-	glm::mat4 mMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(button.position().x, button.position().y, 0.0f));
+	glm::mat4 mMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(button.position().x* static_cast<float>(width), button.position().y*static_cast<float>(height), 0.0f));
 	glm::mat4 vMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
 	glm::mat4 mvpMatrix = camera.projectionMatrix() * vMatrix * mMatrix;
