@@ -39,10 +39,10 @@ void Button::onCLick(GLFWwindow* window, float x, float y) {
 
 	glm::vec2 size_2 = _size / 2.0f;
 
-	float left = width * _position.x - size_2.x;
-	float right = width * _position.x + size_2.x;
-	float top = height * _position.y - size_2.y;
-	float bottom = height * _position.y + size_2.y;
+	float left = static_cast<float>(width) * _position.x - size_2.x;
+	float right = static_cast<float>(width) * _position.x + size_2.x;
+	float top = static_cast<float>(height) * _position.y - size_2.y;
+	float bottom = static_cast<float>(height) * _position.y + size_2.y;
 
 	if (x >= left && x <= right && y >= top && y <= bottom) {
 		_buttonClickNotifier.notify(this);

@@ -2,8 +2,9 @@
 #include <GL/glew.h>
 #include <OpenGLWrapper.h>
 
-#include "Camera.h"
 #include "Button.h"
+#include "Camera.h"
+#include "Grid.h"
 #include "WindowClickNotifier.h"
 
 
@@ -15,6 +16,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 
 /*************  CONSTS  *****************/
 
@@ -34,6 +36,10 @@ Camera camera;
 std::shared_ptr<Button> btnAStar;
 std::shared_ptr<Button> btnDijkstra;
 
+std::shared_ptr<Grid> grid;
+
+GLuint whiteTexture = 0;
+
 GLuint dijkstraNotClickedTexture = 0;
 GLuint dijkstraClickedTexture = 0;
 
@@ -49,13 +55,16 @@ bool dijkstra = true;
 void window_reshape_callback(GLFWwindow* window, int newWidth, int newHeight);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void init(GLFWwindow*);
+void createTextures();
+void createGrid();
 void createDijkstraButton();
 void createAStarButton();
 void display(GLFWwindow*, double dt);
 
 GLuint loadImage(const std::string& file);
 void createButtonRenderingProgram(const std::string& vertShaderFile, const std::string& fragShaderFile);
-void drawButton(const Button& button, GLFWwindow* window);
+void drawButton(const Button& button, GLFWwindow* window, float x, float y);
+void drawGrid(const Grid& grid, GLFWwindow* window);
 
 /**********  END FUNCTIONS  *************/
 
@@ -63,6 +72,7 @@ void drawButton(const Button& button, GLFWwindow* window);
 
 void onDijkstraClick(Button*);
 void onAStarClick(Button*);
+void onGridClicked(Button*);
 
 /***********  END EVENTS  ***************/
 
@@ -74,7 +84,7 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, "Shortest Path Visualizer", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(1000, 600, "Shortest Path Visualizer", NULL, NULL);
 
 	glfwMakeContextCurrent(window);
 
@@ -140,7 +150,6 @@ void init(GLFWwindow* window) {
 	//creates button rendering program
 	createButtonRenderingProgram("ButtonVertShader.glsl", "ButtonFragShader.glsl");
 
-
 	//creates camera
 	int width, height;
 
@@ -148,6 +157,12 @@ void init(GLFWwindow* window) {
 	camera.resetCamera(width, height);
 
 	windowClickNotifier = std::unique_ptr<WindowClickNotifier>(new WindowClickNotifier(window));
+
+	//load textures
+	createTextures();
+
+	//create grid
+	createGrid();
 
 	//creates buttons
 	dijkstra = true;
@@ -158,18 +173,30 @@ void init(GLFWwindow* window) {
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 }
 
-void createDijkstraButton() {
+void createTextures() {
+	whiteTexture = loadImage("White.bmp");
+
 	dijkstraNotClickedTexture = loadImage("D.bmp");
 	dijkstraClickedTexture = loadImage("D_sel.bmp");
-	btnDijkstra = std::make_shared<Button>(dijkstraClickedTexture, 0.6f, 0.1f, 30.0f, 30.0f);
+
+	aStarNotClickedTexture = loadImage("A_Star.bmp");
+	aStarClickedTexture = loadImage("A_Star_sel.bmp");
+}
+
+void createGrid() {
+	grid = std::make_shared<Grid>(0.47f, 0.5f, 840.0f, 510.0f, 28, 17, whiteTexture);
+	windowClickNotifier->addObserver(grid);
+	grid->addClickListener(onGridClicked);
+}
+
+void createDijkstraButton() {
+	btnDijkstra = std::make_shared<Button>(dijkstraClickedTexture, 0.1f, 0.03f, 30.0f, 30.0f);
 	windowClickNotifier->addObserver(btnDijkstra);
 	btnDijkstra->addClickListener(onDijkstraClick);
 }
 
 void createAStarButton() {
-	aStarNotClickedTexture = loadImage("A_Star.bmp");
-	aStarClickedTexture = loadImage("A_Star_sel.bmp");
-	btnAStar = std::make_shared<Button>(aStarNotClickedTexture, 0.65f, 0.1f, 30.0f, 30.0f);
+	btnAStar = std::make_shared<Button>(aStarNotClickedTexture, 0.15f, 0.03f, 30.0f, 30.0f);
 	windowClickNotifier->addObserver(btnAStar);
 	btnAStar->addClickListener(onAStarClick);
 }
@@ -178,8 +205,9 @@ void display(GLFWwindow* window, double dt) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	drawButton(*btnDijkstra, window);
-	drawButton(*btnAStar, window);
+	drawButton(*btnDijkstra, window, btnDijkstra->position().x, btnDijkstra->position().y);
+	drawButton(*btnAStar, window, btnAStar->position().x, btnAStar->position().y);
+	drawGrid(*grid, window);
 }
 
 GLuint loadImage(const std::string& file) {
@@ -213,7 +241,7 @@ void createButtonRenderingProgram(const std::string& vertShaderFile, const std::
 	std::cout << "createButtonRenderingProgram returnMsg: " << returnMsg << std::endl;
 }
 
-void drawButton(const Button& button, GLFWwindow* window) {
+void drawButton(const Button& button, GLFWwindow* window, float x, float y) {
 	std::string error;
 
 	int width = 0, height = 0;
@@ -223,7 +251,11 @@ void drawButton(const Button& button, GLFWwindow* window) {
 
 	GLuint mvpMatrixLoc = glGetUniformLocation(renderingProgram, "mvpMatrix");
 	
-	glm::mat4 mMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(button.position().x* static_cast<float>(width), button.position().y*static_cast<float>(height), 0.0f));
+	glm::mat4 mMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(	x * static_cast<float>(width),
+																	y * static_cast<float>(height),
+																	0.0f
+																 )
+									  );
 	glm::mat4 vMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
 	glm::mat4 mvpMatrix = camera.projectionMatrix() * vMatrix * mMatrix;
@@ -253,6 +285,26 @@ void drawButton(const Button& button, GLFWwindow* window) {
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+void drawGrid(const Grid& grid, GLFWwindow* window) {
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(window, &width, &height);
+	
+	float centerXPos = grid.center().x * static_cast<float>(width);
+	float centerYPos = grid.center().y * static_cast<float>(height);
+
+	float gridLeft = (centerXPos - (grid.size().x / 2.0f));
+	float gridTop = (centerYPos - (grid.size().y / 2.0f));
+
+	const auto & buttons = grid.buttons();
+	for (const auto& row : buttons) {
+		for (const auto& button : row) {
+			float x = (gridLeft + button.position().x * grid.size().x) / static_cast<float>(width);
+			float y = (gridTop + button.position().y * grid.size().y) / static_cast<float>(height);
+			drawButton(button, window, x, y);
+		}
+	}
+}
+
 void onDijkstraClick(Button* button) {
 	std::cout << "Dijkstra clicked" << std::endl;
 	if (!dijkstra) {
@@ -271,4 +323,8 @@ void onAStarClick(Button* button) {
 	}
 
 	dijkstra = false;
+}
+
+void onGridClicked(Button* button) {
+	std::cout << "Grid clicked. Button index: "<< button->index() << std::endl;
 }
