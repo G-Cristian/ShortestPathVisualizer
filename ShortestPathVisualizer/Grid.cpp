@@ -9,6 +9,14 @@
 
 #include <vector>
 
+void Grid::resetTextures(GLuint buttonTexture) {
+	for (auto& row : _buttons) {
+		for (auto& button : row) {
+			button.texture() = buttonTexture;
+		}
+	}
+}
+
 void Grid::addClickListener(onButtonClick observer) {
 	_buttonClickNotifier.addObserver(observer);
 }

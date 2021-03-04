@@ -18,10 +18,27 @@
 #include <string>
 #include <vector>
 
+/**************  ENUMS  *****************/
+
+enum SelectingMode
+{
+	ClearTile = 0,
+	StartTile = 1,
+	EndTile = 2,
+	BlockTile = 3
+};
+
+/************  END ENUMS  ***************/
+
 /*************  CONSTS  *****************/
 
 const double fps = 30.0;		//frames per second
 const double secondsPerFrame = 1.0 / fps;
+
+const int gridXButtons = 28;
+const int gridYButtons = 17;
+
+const double secondsPerUpdate = 2.5f;
 
 /***********  END CONSTS  ***************/
 
@@ -36,9 +53,26 @@ Camera camera;
 std::shared_ptr<Button> btnAStar;
 std::shared_ptr<Button> btnDijkstra;
 
+std::shared_ptr<Button> btnClear;
+std::shared_ptr<Button> btnStart;
+std::shared_ptr<Button> btnEnd;
+std::shared_ptr<Button> btnBlock;
+
+std::shared_ptr<Button> btnBegin;
+
 std::shared_ptr<Grid> grid;
 
 GLuint whiteTexture = 0;
+GLuint whiteClickedTexture = 0;
+GLuint startTexture = 0;
+GLuint startClickedTexture = 0;
+GLuint endTexture = 0;
+GLuint endClickedTexture = 0;
+GLuint blockTexture = 0;
+GLuint blockClickedTexture = 0;
+
+GLuint beginTexture = 0;
+GLuint beginClickedTexture = 0;
 
 GLuint dijkstraNotClickedTexture = 0;
 GLuint dijkstraClickedTexture = 0;
@@ -47,6 +81,15 @@ GLuint aStarNotClickedTexture = 0;
 GLuint aStarClickedTexture = 0;
 
 bool dijkstra = true;
+bool executing = false;
+bool isThereStartButton = false;
+bool isThereEndButton = false;
+
+double elapsedTimeSinceLastUpdate = 0.0;
+
+SelectingMode selectingMode = SelectingMode::ClearTile;
+
+std::vector<std::vector<SelectingMode>> statusGrid;
 
 /***********  END GLOBALS  **************/
 
@@ -55,16 +98,27 @@ bool dijkstra = true;
 void window_reshape_callback(GLFWwindow* window, int newWidth, int newHeight);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void init(GLFWwindow*);
+void initStatusGrid();
+void resetGridTextures();
 void createTextures();
 void createGrid();
 void createDijkstraButton();
 void createAStarButton();
+void createClearButton();
+void createStartButton();
+void createEndButton();
+void createBlockButton();
+void createBeginButton();
+
+void update(GLFWwindow*, double dt);
 void display(GLFWwindow*, double dt);
 
 GLuint loadImage(const std::string& file);
 void createButtonRenderingProgram(const std::string& vertShaderFile, const std::string& fragShaderFile);
 void drawButton(const Button& button, GLFWwindow* window, float x, float y);
 void drawGrid(const Grid& grid, GLFWwindow* window);
+
+void getButtonXYFromIndex(int index, int& x, int& y);
 
 /**********  END FUNCTIONS  *************/
 
@@ -73,6 +127,13 @@ void drawGrid(const Grid& grid, GLFWwindow* window);
 void onDijkstraClick(Button*);
 void onAStarClick(Button*);
 void onGridClicked(Button*);
+
+void onClearClick(Button*);
+void onStartClick(Button*);
+void onEndClick(Button*);
+void onBlockClick(Button*);
+
+void onBeginClick(Button*);
 
 /***********  END EVENTS  ***************/
 
@@ -109,6 +170,14 @@ int main() {
 		deltaTime = currentTime - lastTime;
 		lastTime = currentTime;
 		elapsedTimeSinceLastFrame += deltaTime;
+
+		elapsedTimeSinceLastUpdate += deltaTime;
+		if (elapsedTimeSinceLastUpdate >= secondsPerUpdate) {
+			elapsedTimeSinceLastUpdate -= secondsPerUpdate;
+
+			update(window, deltaTime);
+		}
+
 		if (elapsedTimeSinceLastFrame >= secondsPerFrame) {
 			//std::cout << "Elapsed seconds since last frame: " << elapsedTimeSinceLastFrame << std::endl;
 			//std::cout << "FPS: " << fps*secondsPerFrame / elapsedTimeSinceLastFrame << std::endl;
@@ -137,6 +206,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		glfwGetCursorPos(window, &x, &y);
 		windowClickNotifier->notify(x,y);
 	}
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+		if (!executing) {
+			initStatusGrid();
+			resetGridTextures();
+		}
+	}
 }
 
 void init(GLFWwindow* window) {
@@ -158,6 +233,10 @@ void init(GLFWwindow* window) {
 
 	windowClickNotifier = std::unique_ptr<WindowClickNotifier>(new WindowClickNotifier(window));
 
+	//init status grid
+	selectingMode = SelectingMode::ClearTile;
+	initStatusGrid();
+
 	//load textures
 	createTextures();
 
@@ -169,12 +248,44 @@ void init(GLFWwindow* window) {
 	createDijkstraButton();
 	createAStarButton();
 
+	createClearButton();
+	createStartButton();
+	createEndButton();
+	createBlockButton();
+
+	executing = false;
+	createBeginButton();
+
+
 	//after creating everything set the mouse button callback in order to listen to clicks
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 }
 
+void initStatusGrid() {
+	isThereStartButton = false;
+	isThereEndButton = false;
+	statusGrid = std::vector<std::vector<SelectingMode>>(gridYButtons, std::vector<SelectingMode>(gridXButtons, SelectingMode::ClearTile));
+}
+
+void resetGridTextures() {
+	grid->resetTextures(whiteTexture);
+}
+
 void createTextures() {
 	whiteTexture = loadImage("White.bmp");
+	whiteClickedTexture = loadImage("White_sel.bmp");
+
+	startTexture = loadImage("Start.bmp");
+	startClickedTexture = loadImage("Start_sel.bmp");
+
+	endTexture = loadImage("End.bmp");
+	endClickedTexture = loadImage("End_sel.bmp");
+
+	blockTexture = loadImage("Block.bmp");
+	blockClickedTexture = loadImage("Block_sel.bmp");
+
+	beginTexture = loadImage("Begin.bmp");
+	beginClickedTexture = loadImage("Begin_sel.bmp");
 
 	dijkstraNotClickedTexture = loadImage("D.bmp");
 	dijkstraClickedTexture = loadImage("D_sel.bmp");
@@ -184,29 +295,77 @@ void createTextures() {
 }
 
 void createGrid() {
-	grid = std::make_shared<Grid>(0.47f, 0.5f, 840.0f, 510.0f, 28, 17, whiteTexture);
+	grid = std::make_shared<Grid>(0.47f, 0.5f, 840.0f, 510.0f, gridXButtons, gridYButtons, whiteTexture);
 	windowClickNotifier->addObserver(grid);
 	grid->addClickListener(onGridClicked);
 }
 
 void createDijkstraButton() {
-	btnDijkstra = std::make_shared<Button>(dijkstraClickedTexture, 0.1f, 0.03f, 30.0f, 30.0f);
+	btnDijkstra = std::make_shared<Button>(dijkstraClickedTexture, 0.5f, 0.03f, 30.0f, 30.0f);
 	windowClickNotifier->addObserver(btnDijkstra);
 	btnDijkstra->addClickListener(onDijkstraClick);
 }
 
 void createAStarButton() {
-	btnAStar = std::make_shared<Button>(aStarNotClickedTexture, 0.15f, 0.03f, 30.0f, 30.0f);
+	btnAStar = std::make_shared<Button>(aStarNotClickedTexture, 0.55f, 0.03f, 30.0f, 30.0f);
 	windowClickNotifier->addObserver(btnAStar);
 	btnAStar->addClickListener(onAStarClick);
+}
+
+void createClearButton() {
+	btnClear = std::make_shared<Button>(whiteClickedTexture, 0.1f, 0.03f, 30.0f, 30.0f);
+	windowClickNotifier->addObserver(btnClear);
+	btnClear->addClickListener(onClearClick);
+}
+
+void createStartButton() {
+	btnStart = std::make_shared<Button>(startTexture, 0.15f, 0.03f, 30.0f, 30.0f);
+	windowClickNotifier->addObserver(btnStart);
+	btnStart->addClickListener(onStartClick);
+}
+
+void createEndButton() {
+	btnEnd = std::make_shared<Button>(endTexture, 0.2f, 0.03f, 30.0f, 30.0f);
+	windowClickNotifier->addObserver(btnEnd);
+	btnEnd->addClickListener(onEndClick);
+}
+
+void createBlockButton() {
+	btnBlock = std::make_shared<Button>(blockTexture, 0.25f, 0.03f, 30.0f, 30.0f);
+	windowClickNotifier->addObserver(btnBlock);
+	btnBlock->addClickListener(onBlockClick);
+}
+
+void createBeginButton() {
+	btnBegin = std::make_shared<Button>(beginTexture, 0.7f, 0.03f, 30.0f, 30.0f);
+	windowClickNotifier->addObserver(btnBegin);
+	btnBegin->addClickListener(onBeginClick);
+}
+
+void update(GLFWwindow*, double dt) {
+	//TODO: just for testing
+	if (executing) {
+		executing = false;
+		btnBegin->texture() = beginTexture;
+	}
+
+	//TODO: Add code to step the path finding algorithm
 }
 
 void display(GLFWwindow* window, double dt) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
+	drawButton(*btnClear, window, btnClear->position().x, btnClear->position().y);
+	drawButton(*btnStart, window, btnStart->position().x, btnStart->position().y);
+	drawButton(*btnEnd, window, btnEnd->position().x, btnEnd->position().y);
+	drawButton(*btnBlock, window, btnBlock->position().x, btnBlock->position().y);
+
 	drawButton(*btnDijkstra, window, btnDijkstra->position().x, btnDijkstra->position().y);
 	drawButton(*btnAStar, window, btnAStar->position().x, btnAStar->position().y);
+
+	drawButton(*btnBegin, window, btnBegin->position().x, btnBegin->position().y);
+
 	drawGrid(*grid, window);
 }
 
@@ -307,7 +466,7 @@ void drawGrid(const Grid& grid, GLFWwindow* window) {
 
 void onDijkstraClick(Button* button) {
 	std::cout << "Dijkstra clicked" << std::endl;
-	if (!dijkstra) {
+	if (!dijkstra && !executing) {
 		button->texture() = dijkstraClickedTexture;
 		btnAStar->texture() = aStarNotClickedTexture;
 	}
@@ -317,7 +476,7 @@ void onDijkstraClick(Button* button) {
 
 void onAStarClick(Button* button) {
 	std::cout << "A* clicked" << std::endl;
-	if (dijkstra) {
+	if (dijkstra && !executing) {
 		button->texture() = aStarClickedTexture;
 		btnDijkstra->texture() = dijkstraNotClickedTexture;
 	}
@@ -326,5 +485,117 @@ void onAStarClick(Button* button) {
 }
 
 void onGridClicked(Button* button) {
-	std::cout << "Grid clicked. Button index: "<< button->index() << std::endl;
+	std::cout << "Grid clicked. Button index: " << button->index() << std::endl;
+
+	int x = 0;
+	int y = 0;
+
+	getButtonXYFromIndex(button->index(), x, y);
+
+	std::cout << "Button in grid clicked x: " << x << " y: " << y << std::endl;
+
+	if (!executing) {
+		if (selectingMode == SelectingMode::StartTile && isThereStartButton) {
+			// if there is already a start tile I can't add another one
+			return;
+		}
+		else if (selectingMode == SelectingMode::EndTile && isThereEndButton) {
+			// if there is already an end tile I can't add another one
+			return;
+		}
+
+		//if in this button there is a start position remove start position
+		//Note that if I am adding a start position there is not a start button already, otherwise I had returned before
+		if (statusGrid[y][x] == SelectingMode::StartTile) {
+			isThereStartButton = false;
+		}
+		//if in this button there is an end position remove end position
+		//Note that if I am adding an end position there is not an end button already, otherwise I had returned before
+		if (statusGrid[y][x] == SelectingMode::EndTile) {
+			isThereEndButton = false;
+		}
+
+		statusGrid[y][x] = selectingMode;
+
+		switch (selectingMode)
+		{
+		case ClearTile:
+			button->texture() = whiteTexture;
+			break;
+		case StartTile:
+			button->texture() = startTexture;
+			isThereStartButton = true;
+			break;
+		case EndTile:
+			button->texture() = endTexture;
+			isThereEndButton = true;
+			break;
+		case BlockTile:
+			button->texture() = blockTexture;
+			break;
+		default:
+			std::cout << "Should never enter here" << std::endl;
+			break;
+		}
+	}
+}
+
+void onClearClick(Button* button) {
+	if (!executing && selectingMode != SelectingMode::ClearTile) {
+		selectingMode = SelectingMode::ClearTile;
+
+		btnClear->texture() = whiteClickedTexture;
+		btnStart->texture() = startTexture;
+		btnEnd->texture() = endTexture;
+		btnBlock->texture() = blockTexture;
+	}
+}
+
+void onStartClick(Button* button) {
+	if (!executing && selectingMode != SelectingMode::StartTile) {
+		selectingMode = SelectingMode::StartTile;
+
+		btnClear->texture() = whiteTexture;
+		btnStart->texture() = startClickedTexture;
+		btnEnd->texture() = endTexture;
+		btnBlock->texture() = blockTexture;
+	}
+}
+
+void onEndClick(Button* button) {
+	if (!executing && selectingMode != SelectingMode::EndTile) {
+		selectingMode = SelectingMode::EndTile;
+
+		btnClear->texture() = whiteTexture;
+		btnStart->texture() = startTexture;
+		btnEnd->texture() = endClickedTexture;
+		btnBlock->texture() = blockTexture;
+	}
+}
+
+void onBlockClick(Button* button) {
+	if (!executing && selectingMode != SelectingMode::BlockTile) {
+		selectingMode = SelectingMode::BlockTile;
+
+		btnClear->texture() = whiteTexture;
+		btnStart->texture() = startTexture;
+		btnEnd->texture() = endTexture;
+		btnBlock->texture() = blockClickedTexture;
+	}
+}
+
+void onBeginClick(Button* button) {
+	if (!executing && isThereStartButton && isThereEndButton) {
+		std::cout << "Begin Clicked" << std::endl;
+		elapsedTimeSinceLastUpdate = 0.0;
+		executing = true;
+		button->texture() = beginClickedTexture;
+
+		//TODO: start path finding algorithm
+	}
+}
+
+void getButtonXYFromIndex(int index, int& x, int& y) {
+	x = index % gridXButtons;
+	y = index / gridXButtons;
 }

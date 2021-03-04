@@ -23,6 +23,8 @@ public:
 
 	~Grid() = default;
 
+	void resetTextures(GLuint buttonTexture);
+
 	const glm::vec2& center() const { return _center; }
 
 	const glm::vec2& size() const { return _size; }
