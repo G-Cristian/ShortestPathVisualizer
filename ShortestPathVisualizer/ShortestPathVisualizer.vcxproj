@@ -154,6 +154,7 @@
     <ClCompile Include="Graph.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MinHeap.cpp" />
     <ClCompile Include="WindowClickNotifier.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -163,6 +164,7 @@
     <ClInclude Include="Graph.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="IClickable.h" />
+    <ClInclude Include="MinHeap.h" />
     <ClInclude Include="WindowClickNotifier.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
