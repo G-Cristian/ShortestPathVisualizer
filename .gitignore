@@ -6,3 +6,6 @@ ShortestPathVisualizer/Debug
 *.sdf
 *.suo
 *.user
+MinHeap.obj
+minheap_tests.obj
+minheap_tests.exe
