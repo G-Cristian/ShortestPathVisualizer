@@ -151,6 +151,7 @@
     <ClCompile Include="Button.cpp" />
     <ClCompile Include="ButtonClickNotifier.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Graph.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="WindowClickNotifier.cpp" />
@@ -159,6 +160,7 @@
     <ClInclude Include="Button.h" />
     <ClInclude Include="ButtonClickNotifier.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Graph.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="IClickable.h" />
     <ClInclude Include="WindowClickNotifier.h" />

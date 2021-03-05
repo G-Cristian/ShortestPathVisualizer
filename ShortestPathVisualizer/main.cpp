@@ -4,6 +4,7 @@
 
 #include "Button.h"
 #include "Camera.h"
+#include "Graph.h"
 #include "Grid.h"
 #include "WindowClickNotifier.h"
 
@@ -14,6 +15,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>
@@ -90,6 +92,7 @@ double elapsedTimeSinceLastUpdate = 0.0;
 SelectingMode selectingMode = SelectingMode::ClearTile;
 
 std::vector<std::vector<SelectingMode>> statusGrid;
+std::unique_ptr<Graph> graph;
 
 /***********  END GLOBALS  **************/
 
@@ -119,6 +122,13 @@ void drawButton(const Button& button, GLFWwindow* window, float x, float y);
 void drawGrid(const Grid& grid, GLFWwindow* window);
 
 void getButtonXYFromIndex(int index, int& x, int& y);
+int getIndexFromXY(int x, int y);
+
+void initializeGraph();
+int getTopAdjacentButtonIndex(int x, int y);
+int getBottomAdjacentButtonIndex(int x, int y);
+int getLeftAdjacentButtonIndex(int x, int y);
+int getRightAdjacentButtonIndex(int x, int y);
 
 /**********  END FUNCTIONS  *************/
 
@@ -591,11 +601,102 @@ void onBeginClick(Button* button) {
 		executing = true;
 		button->texture() = beginClickedTexture;
 
+		initializeGraph();
 		//TODO: start path finding algorithm
+
 	}
 }
 
 void getButtonXYFromIndex(int index, int& x, int& y) {
 	x = index % gridXButtons;
 	y = index / gridXButtons;
+}
+
+int getIndexFromXY(int x, int y) {
+	return x + y * gridXButtons;
+}
+
+void initializeGraph() {
+	graph.reset(new Graph(gridXButtons * gridYButtons));
+
+	for (int y = 0; y != statusGrid.size(); ++y) {
+		const auto& row = statusGrid[y];
+		for (int x = 0; x != row.size(); ++x) {
+			int index = getIndexFromXY(x, y);
+			Graph::Node node = { x, y, -1 };
+			//add node to graph
+			graph->nodes().push_back(node);
+			graph->adjacencyList().push_back(std::list<int>());
+
+			//if this node is a block don't add adjacency
+			if (row[x] == SelectingMode::BlockTile) {
+				continue;
+			}
+
+			//add adjacency nodes
+			int topAdjacent = getTopAdjacentButtonIndex(x, y);
+			if (topAdjacent >= 0) {
+				graph->adjacencyList()[index].push_back(topAdjacent);
+			}
+
+			int bottomAdjacent = getBottomAdjacentButtonIndex(x, y);
+			if (bottomAdjacent >= 0) {
+				graph->adjacencyList()[index].push_back(bottomAdjacent);
+			}
+
+			int leftAdjacent = getLeftAdjacentButtonIndex(x, y);
+			if (leftAdjacent >= 0) {
+				graph->adjacencyList()[index].push_back(leftAdjacent);
+			}
+
+			int rightAdjacent = getRightAdjacentButtonIndex(x, y);
+			if (rightAdjacent >= 0) {
+				graph->adjacencyList()[index].push_back(rightAdjacent);
+			}
+
+			//check if this node is start or end one
+			if (row[x] == SelectingMode::StartTile) {
+				graph->startNode() = index;
+			}
+			else if (row[x] == SelectingMode::EndTile) {
+				graph->endNode() = index;
+			}
+		}
+	}
+}
+
+int getTopAdjacentButtonIndex(int x, int y) {
+	if (y <= 0 || statusGrid[y - 1][x] == SelectingMode::BlockTile) {
+		return -1;
+	}
+	else {
+		return getIndexFromXY(x, y - 1);
+	}
+}
+
+int getBottomAdjacentButtonIndex(int x, int y) {
+	if ((y+1) >=gridYButtons || statusGrid[y + 1][x] == SelectingMode::BlockTile) {
+		return -1;
+	}
+	else {
+		return getIndexFromXY(x, y + 1);
+	}
+}
+
+int getLeftAdjacentButtonIndex(int x, int y) {
+	if (x <= 0 || statusGrid[y][x-1] == SelectingMode::BlockTile) {
+		return -1;
+	}
+	else {
+		return getIndexFromXY(x-1, y);
+	}
+}
+
+int getRightAdjacentButtonIndex(int x, int y) {
+	if ((x+1) >= gridXButtons || statusGrid[y][x + 1] == SelectingMode::BlockTile) {
+		return -1;
+	}
+	else {
+		return getIndexFromXY(x + 1, y);
+	}
 }
