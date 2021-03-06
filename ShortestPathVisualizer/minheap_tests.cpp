@@ -37,13 +37,18 @@ bool decrease_key_first_preserves_invariant();
 bool decrease_key_second_making_it_smallest_preserves_invariant();
 bool decrease_key_forth_making_it_smallest_preserves_invariant();
 bool decrease_key_forth_but_does_not_make_it_smallest_preserves_invariant();
+bool insert_pop_insert_preserves_invariant_and_does_not_change_previous_insertion();
+bool insert_pop_insert_insert_preserves_invariant_and_does_not_change_previous_insertion();
+bool insert_and_asks_for_key_less_than_zero();
+bool insert_pop_and_asks_for_key_equal_zero();
+bool insert_and_asks_for_key_zero();
 
 /**********  END FUNCTIONS  *************/
 
 int main() {
 	int okCount = 0;
 	int errCount = 0;
-	int totalTests = 12;
+	int totalTests = 17;
 
 	TEST(test_empty_heap, errCount, okCount);
 	TEST(test_empty_heap_capacity_three_size_equals_zero_and_capacity_equals_three, errCount, okCount);
@@ -57,6 +62,11 @@ int main() {
 	TEST(decrease_key_second_making_it_smallest_preserves_invariant, errCount, okCount);
 	TEST(decrease_key_forth_making_it_smallest_preserves_invariant, errCount, okCount);
 	TEST(decrease_key_forth_but_does_not_make_it_smallest_preserves_invariant, errCount, okCount);
+	TEST(insert_pop_insert_preserves_invariant_and_does_not_change_previous_insertion, errCount, okCount);
+	TEST(insert_pop_insert_insert_preserves_invariant_and_does_not_change_previous_insertion, errCount, okCount);
+	TEST(insert_and_asks_for_key_less_than_zero, errCount, okCount);
+	TEST(insert_pop_and_asks_for_key_equal_zero, errCount, okCount);
+	TEST(insert_and_asks_for_key_zero, errCount, okCount);
 
 	assert(totalTests == (okCount + errCount));
 
@@ -507,4 +517,114 @@ bool decrease_key_forth_but_does_not_make_it_smallest_preserves_invariant() {
 		biggest.heapIndex == 1;		//biggest is no longer in the heap but I will test it anyway just to make sure everything works as expected
 
 	return	ok;
+}
+
+bool insert_pop_insert_preserves_invariant_and_does_not_change_previous_insertion() {
+	MinHeap heap;
+	MinHeap::ElementType e;
+	Graph::Node a = { 1,2,-1 };
+	e.first = 2;
+	e.second = &a;
+
+	heap.insert(e);
+
+	heap.pop();
+
+	Graph::Node b = { 3,4,-1 };
+	e.first = 4;
+	e.second = &b;
+
+	heap.insert(e);
+
+	auto t = heap.top();
+
+	return	heap.size() == 1 &&
+		t.first == 4 &&
+		t.second->x == b.x &&
+		t.second->y == b.y &&
+		t.second->heapIndex == 0 &&
+		a.x == 1 &&
+		a.y == 2 &&
+		a.heapIndex == 0 &&
+		b.x == 3 &&
+		b.y == 4 &&
+		b.heapIndex == 0;
+}
+
+bool insert_pop_insert_insert_preserves_invariant_and_does_not_change_previous_insertion() {
+	MinHeap heap;
+	MinHeap::ElementType e;
+	Graph::Node a = { 1,2,-1 };
+	e.first = 2;
+	e.second = &a;
+
+	heap.insert(e);
+
+	heap.pop();
+
+	Graph::Node b = { 3,4,-1 };
+	e.first = 4;
+	e.second = &b;
+
+	heap.insert(e);
+
+	Graph::Node c = { 5,6,-1 };
+	e.first = 5;
+	e.second = &c;
+
+	heap.insert(e);
+
+	auto t = heap.top();
+
+	return	heap.size() == 2 &&
+		t.first == 4 &&
+		t.second->x == b.x &&
+		t.second->y == b.y &&
+		t.second->heapIndex == 0 &&
+		a.x == 1 &&
+		a.y == 2 &&
+		a.heapIndex == 0 &&
+		b.x == 3 &&
+		b.y == 4 &&
+		b.heapIndex == 0 &&
+		c.x == 5 &&
+		c.y == 6 &&
+		c.heapIndex == 1;
+}
+
+bool insert_and_asks_for_key_less_than_zero() {
+	MinHeap heap;
+	MinHeap::ElementType e;
+	Graph::Node a = { 1,2,-1 };
+	e.first = 2;
+	e.second = &a;
+
+	heap.insert(e);
+
+	return !heap.hasKey(-1);
+}
+
+bool insert_pop_and_asks_for_key_equal_zero() {
+	MinHeap heap;
+	MinHeap::ElementType e;
+	Graph::Node a = { 1,2,-1 };
+	e.first = 2;
+	e.second = &a;
+
+	heap.insert(e);
+	heap.pop();
+
+	return !heap.hasKey(0);
+}
+
+bool insert_and_asks_for_key_zero() {
+	MinHeap heap;
+	MinHeap::ElementType e;
+	Graph::Node a = { 1,2,-1 };
+	e.first = 2;
+	e.second = &a;
+
+	heap.insert(e);
+
+	return heap.hasKey(0);
 }

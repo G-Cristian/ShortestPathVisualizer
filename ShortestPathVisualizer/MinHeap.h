@@ -23,6 +23,7 @@ public:
 	ElementType& top();
 
 	void decreaseKey(int index, float newValue);
+	bool hasKey(int index)const { return index >= 0 && index < size(); }
 
 	bool isEmpty()const { return _elements.empty(); }
 	size_t size()const { return _elements.size(); }
