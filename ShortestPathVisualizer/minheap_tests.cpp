@@ -131,8 +131,7 @@ bool test_top_smallest() {
 	auto t = heap.top();
 
 	return	t.first == 2 &&
-		t.second->x == node.x &&
-		t.second->y == node.y &&
+		*(t.second) == node &&
 		t.second->heapIndex == 0 &&
 		node.heapIndex == 0;
 }
@@ -155,8 +154,7 @@ bool test_insert_big_small_preserves_invariant() {
 	// top is smallest and heap indices are correct for big and small node
 	auto t = heap.top();
 	bool ok = t.first == 2 &&
-		t.second->x == small.x &&
-		t.second->y == small.y &&
+		*(t.second) == small &&
 		t.second->heapIndex == 0 &&
 		small.heapIndex == 0 &&
 		big.heapIndex == 1;
@@ -164,8 +162,7 @@ bool test_insert_big_small_preserves_invariant() {
 	heap.pop();
 	t = heap.top();
 	ok = ok && t.first == 3 &&
-		t.second->x == big.x &&
-		t.second->y == big.y &&
+		*(t.second) == big &&
 		t.second->heapIndex == 0 &&
 		//small.heapIndex == 1 &&  // small is no longer in the heap therefore ignore
 		big.heapIndex == 0;
@@ -197,8 +194,7 @@ bool test_insert_small_big_smallest_preserves_invariant() {
 	// top is smallest and heap indices are correct for big, small and smallest node
 	auto t = heap.top();
 	bool ok = t.first == 1 &&
-		t.second->x == smallest.x &&
-		t.second->y == smallest.y &&
+		*(t.second) == smallest &&
 		t.second->heapIndex == 0 &&
 		smallest.heapIndex == 0 &&
 		small.heapIndex == 2 &&
@@ -209,8 +205,7 @@ bool test_insert_small_big_smallest_preserves_invariant() {
 	// top is small and heap indices are correct for big and smallode
 	t = heap.top();
 	ok = ok && t.first == 2 &&
-		t.second->x == small.x &&
-		t.second->y == small.y &&
+		*(t.second) == small &&
 		t.second->heapIndex == 0 &&
 		//smallest.heapIndex == 0 &&	// smallest is no longer in the heap therefore ignore
 		small.heapIndex == 0 &&
@@ -220,8 +215,7 @@ bool test_insert_small_big_smallest_preserves_invariant() {
 	// top is big and heap indices are correct for big
 	t = heap.top();
 	ok = ok && t.first == 3 &&
-		t.second->x == big.x &&
-		t.second->y == big.y &&
+		*(t.second) == big &&
 		t.second->heapIndex == 0 &&
 		//smallest.heapIndex == 0 &&	// smallest is no longer in the heap therefore ignore
 		//small.heapIndex == 0 &&		// small is no longer in the heap therefore ignore
@@ -256,8 +250,7 @@ bool decrease_key_first_preserves_invariant() {
 	// top is smallest and heap indices are correct for big, small and smallest node
 	auto t = heap.top();
 	bool ok = t.first == 0 &&
-		t.second->x == smallest.x &&
-		t.second->y == smallest.y &&
+		*(t.second) == smallest &&
 		t.second->heapIndex == 0 &&
 		smallest.heapIndex == 0 &&
 		small.heapIndex == 2 &&
@@ -267,9 +260,9 @@ bool decrease_key_first_preserves_invariant() {
 
 	// top is small and heap indices are correct for big and smallode
 	t = heap.top();
-	ok = ok && t.first == 2 &&
-		t.second->x == small.x &&
-		t.second->y == small.y &&
+	ok = ok &&
+		t.first == 2 &&
+		*(t.second) == small &&
 		t.second->heapIndex == 0 &&
 		//smallest.heapIndex == 0 &&	// smallest is no longer in the heap therefore ignore
 		small.heapIndex == 0 &&
@@ -279,8 +272,7 @@ bool decrease_key_first_preserves_invariant() {
 	// top is big and heap indices are correct for big
 	t = heap.top();
 	ok = ok && t.first == 3 &&
-		t.second->x == big.x &&
-		t.second->y == big.y &&
+		*(t.second) == big &&
 		t.second->heapIndex == 0 &&
 		//smallest.heapIndex == 0 &&	// smallest is no longer in the heap therefore ignore
 		//small.heapIndex == 0 &&		// small is no longer in the heap therefore ignore
@@ -316,8 +308,7 @@ bool decrease_key_second_making_it_smallest_preserves_invariant() {
 	// top is big and heap indices are correct for big, small and smallest node
 	auto t = heap.top();
 	bool ok = t.first == 0 &&
-		t.second->x == big.x &&
-		t.second->y == big.y &&
+		*(t.second) == big &&
 		t.second->heapIndex == 0 &&
 		smallest.heapIndex == 1 &&
 		small.heapIndex == 2 &&
@@ -328,8 +319,7 @@ bool decrease_key_second_making_it_smallest_preserves_invariant() {
 	// top is smallest and heap indices are correct for big and smallode
 	t = heap.top();
 	ok = ok && t.first == 1 &&
-		t.second->x == smallest.x &&
-		t.second->y == smallest.y &&
+		*(t.second) == smallest &&
 		t.second->heapIndex == 0 &&
 		smallest.heapIndex == 0 &&
 		small.heapIndex == 1; //&&
@@ -339,8 +329,7 @@ bool decrease_key_second_making_it_smallest_preserves_invariant() {
 	// top is small and heap indices are correct for big
 	t = heap.top();
 	ok = ok && t.first == 2 &&
-		t.second->x == small.x &&
-		t.second->y == small.y &&
+		*(t.second) == small &&
 		t.second->heapIndex == 0 &&
 		smallest.heapIndex == 1 &&	// smallest is no longer in the heap therefore ignore but I will test it anyway just to make sure everything works as expected
 		small.heapIndex == 0; //&&
@@ -383,8 +372,7 @@ bool decrease_key_forth_making_it_smallest_preserves_invariant() {
 	auto t = heap.top();
 	bool ok = heap.size() == 4 && !heap.isEmpty() &&
 		t.first == 0 &&
-		t.second->x == biggest.x &&
-		t.second->y == biggest.y &&
+		*(t.second) == biggest &&
 		t.second->heapIndex == 0 &&
 		smallest.heapIndex == 1 &&
 		small.heapIndex == 2 &&
@@ -397,8 +385,7 @@ bool decrease_key_forth_making_it_smallest_preserves_invariant() {
 	t = heap.top();
 	ok = ok && heap.size() == 3 && !heap.isEmpty() &&
 		t.first == 1 &&
-		t.second->x == smallest.x &&
-		t.second->y == smallest.y &&
+		*(t.second) == smallest &&
 		t.second->heapIndex == 0 &&
 		smallest.heapIndex == 0 &&
 		small.heapIndex == 2 &&
@@ -410,8 +397,7 @@ bool decrease_key_forth_making_it_smallest_preserves_invariant() {
 	t = heap.top();
 	ok = ok && heap.size() == 2 && !heap.isEmpty() &&
 		t.first == 2 &&
-		t.second->x == small.x &&
-		t.second->y == small.y &&
+		*(t.second) == small &&
 		t.second->heapIndex == 0 &&
 		smallest.heapIndex == 2 &&	// smallest is no longer in the heap but I will test it anyway just to make sure everything works as expected
 		small.heapIndex == 0 &&		
@@ -423,8 +409,7 @@ bool decrease_key_forth_making_it_smallest_preserves_invariant() {
 	t = heap.top();
 	ok = ok && heap.size() == 1 && !heap.isEmpty() &&
 		t.first == 3 &&
-		t.second->x == big.x &&
-		t.second->y == big.y &&
+		*(t.second) == big &&
 		t.second->heapIndex == 0 &&
 		smallest.heapIndex == 2 &&	// smallest is no longer in the heap but I will test it anyway just to make sure everything works as expected
 		small.heapIndex == 1 &&		// small is no longer in the heap but I will test it anyway just to make sure everything works as expected
@@ -468,8 +453,7 @@ bool decrease_key_forth_but_does_not_make_it_smallest_preserves_invariant() {
 	auto t = heap.top();
 	bool ok = heap.size() == 4 && !heap.isEmpty() &&
 		t.first == 1 &&
-		t.second->x == smallest.x &&
-		t.second->y == smallest.y &&
+		*(t.second) == smallest &&
 		t.second->heapIndex == 0 &&
 		smallest.heapIndex == 0 &&
 		small.heapIndex == 2 &&
@@ -482,8 +466,7 @@ bool decrease_key_forth_but_does_not_make_it_smallest_preserves_invariant() {
 	t = heap.top();
 	ok = ok && heap.size() == 3 && !heap.isEmpty() &&
 		t.first == 2 &&
-		t.second->x == small.x &&
-		t.second->y == small.y &&
+		*(t.second) == small &&
 		t.second->heapIndex == 0 &&		//smallest is no longer in the heap but I will test it anyway just to make sure everything works as expected
 		smallest.heapIndex == 3 &&
 		small.heapIndex == 0 &&
@@ -495,8 +478,7 @@ bool decrease_key_forth_but_does_not_make_it_smallest_preserves_invariant() {
 	t = heap.top();
 	ok = ok && heap.size() == 2 && !heap.isEmpty() &&
 		t.first == 3 &&
-		t.second->x == biggest.x &&
-		t.second->y == biggest.y &&
+		*(t.second) == biggest &&
 		t.second->heapIndex == 0 &&
 		smallest.heapIndex == 3 &&	// smallest is no longer in the heap but I will test it anyway just to make sure everything works as expected
 		small.heapIndex == 2 &&		//small is no longer in the heap but I will test it anyway just to make sure everything works as expected
@@ -508,8 +490,7 @@ bool decrease_key_forth_but_does_not_make_it_smallest_preserves_invariant() {
 	t = heap.top();
 	ok = ok && heap.size() == 1 && !heap.isEmpty() &&
 		t.first == 4 &&
-		t.second->x == big.x &&
-		t.second->y == big.y &&
+		*(t.second) == big &&
 		t.second->heapIndex == 0 &&
 		smallest.heapIndex == 3 &&	// smallest is no longer in the heap but I will test it anyway just to make sure everything works as expected
 		small.heapIndex == 2 &&		// small is no longer in the heap but I will test it anyway just to make sure everything works as expected
@@ -522,7 +503,7 @@ bool decrease_key_forth_but_does_not_make_it_smallest_preserves_invariant() {
 bool insert_pop_insert_preserves_invariant_and_does_not_change_previous_insertion() {
 	MinHeap heap;
 	MinHeap::ElementType e;
-	Graph::Node a = { 1,2,-1 };
+	Graph::Node a = { 0,1,2,-1 };
 	e.first = 2;
 	e.second = &a;
 
@@ -530,7 +511,7 @@ bool insert_pop_insert_preserves_invariant_and_does_not_change_previous_insertio
 
 	heap.pop();
 
-	Graph::Node b = { 3,4,-1 };
+	Graph::Node b = { 1,3,4,-1 };
 	e.first = 4;
 	e.second = &b;
 
@@ -540,12 +521,13 @@ bool insert_pop_insert_preserves_invariant_and_does_not_change_previous_insertio
 
 	return	heap.size() == 1 &&
 		t.first == 4 &&
-		t.second->x == b.x &&
-		t.second->y == b.y &&
+		*(t.second) == b &&
 		t.second->heapIndex == 0 &&
+		a.index == 0 &&
 		a.x == 1 &&
 		a.y == 2 &&
 		a.heapIndex == 0 &&
+		b.index == 1 &&
 		b.x == 3 &&
 		b.y == 4 &&
 		b.heapIndex == 0;
@@ -554,7 +536,7 @@ bool insert_pop_insert_preserves_invariant_and_does_not_change_previous_insertio
 bool insert_pop_insert_insert_preserves_invariant_and_does_not_change_previous_insertion() {
 	MinHeap heap;
 	MinHeap::ElementType e;
-	Graph::Node a = { 1,2,-1 };
+	Graph::Node a = { 0,1,2,-1 };
 	e.first = 2;
 	e.second = &a;
 
@@ -562,13 +544,13 @@ bool insert_pop_insert_insert_preserves_invariant_and_does_not_change_previous_i
 
 	heap.pop();
 
-	Graph::Node b = { 3,4,-1 };
+	Graph::Node b = {1, 3,4,-1 };
 	e.first = 4;
 	e.second = &b;
 
 	heap.insert(e);
 
-	Graph::Node c = { 5,6,-1 };
+	Graph::Node c = {2, 5,6,-1 };
 	e.first = 5;
 	e.second = &c;
 
@@ -578,15 +560,17 @@ bool insert_pop_insert_insert_preserves_invariant_and_does_not_change_previous_i
 
 	return	heap.size() == 2 &&
 		t.first == 4 &&
-		t.second->x == b.x &&
-		t.second->y == b.y &&
+		*(t.second) == b &&
 		t.second->heapIndex == 0 &&
+		a.index == 0 &&
 		a.x == 1 &&
 		a.y == 2 &&
 		a.heapIndex == 0 &&
+		b.index == 1 &&
 		b.x == 3 &&
 		b.y == 4 &&
 		b.heapIndex == 0 &&
+		c.index == 2 &&
 		c.x == 5 &&
 		c.y == 6 &&
 		c.heapIndex == 1;
@@ -595,7 +579,7 @@ bool insert_pop_insert_insert_preserves_invariant_and_does_not_change_previous_i
 bool insert_and_asks_for_key_less_than_zero() {
 	MinHeap heap;
 	MinHeap::ElementType e;
-	Graph::Node a = { 1,2,-1 };
+	Graph::Node a = {0, 1,2,-1 };
 	e.first = 2;
 	e.second = &a;
 
@@ -607,7 +591,7 @@ bool insert_and_asks_for_key_less_than_zero() {
 bool insert_pop_and_asks_for_key_equal_zero() {
 	MinHeap heap;
 	MinHeap::ElementType e;
-	Graph::Node a = { 1,2,-1 };
+	Graph::Node a = {0, 1,2,-1 };
 	e.first = 2;
 	e.second = &a;
 
@@ -620,7 +604,7 @@ bool insert_pop_and_asks_for_key_equal_zero() {
 bool insert_and_asks_for_key_zero() {
 	MinHeap heap;
 	MinHeap::ElementType e;
-	Graph::Node a = { 1,2,-1 };
+	Graph::Node a = {0, 1,2,-1 };
 	e.first = 2;
 	e.second = &a;
 
