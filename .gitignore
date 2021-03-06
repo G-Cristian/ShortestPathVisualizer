@@ -7,5 +7,6 @@ ShortestPathVisualizer/Debug
 *.suo
 *.user
 MinHeap.obj
+Graph.obj
 minheap_tests.obj
 minheap_tests.exe
