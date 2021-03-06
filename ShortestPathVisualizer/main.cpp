@@ -622,8 +622,9 @@ void initializeGraph() {
 	for (int y = 0; y != statusGrid.size(); ++y) {
 		const auto& row = statusGrid[y];
 		for (int x = 0; x != row.size(); ++x) {
-			int index = getIndexFromXY(x, y);
-			Graph::Node node = { x, y, -1 };
+			//int index = getIndexFromXY(x, y);
+			int index = graph->nodes().size(); // index equals the position where the node is going to be added
+			Graph::Node node = { index, x, y, -1 };
 			//add node to graph
 			graph->nodes().push_back(node);
 			graph->adjacencyList().push_back(std::list<int>());
