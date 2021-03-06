@@ -7,6 +7,7 @@ class Graph
 {
 public:
 	struct Node {
+		int index;
 		int x;
 		int y;
 		int heapIndex;
@@ -34,3 +35,4 @@ private:
 	int _endNode;
 };
 
+bool operator==(const Graph::Node& left, const Graph::Node& right);
