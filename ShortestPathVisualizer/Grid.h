@@ -33,6 +33,7 @@ public:
 	int yButtons() const { return _yButtons; }
 
 	const std::vector<std::vector<Button>>& buttons() const { return _buttons; }
+	std::vector<std::vector<Button>>& buttons() { return _buttons; }
 
 	//onButtonClick notifier methods
 	void addClickListener(onButtonClick);

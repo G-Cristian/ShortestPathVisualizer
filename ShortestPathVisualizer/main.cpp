@@ -4,8 +4,10 @@
 
 #include "Button.h"
 #include "Camera.h"
+#include "Dijkstra.h"
 #include "Graph.h"
 #include "Grid.h"
+#include "IShortestPathStrategy.h"
 #include "WindowClickNotifier.h"
 
 
@@ -40,7 +42,7 @@ const double secondsPerFrame = 1.0 / fps;
 const int gridXButtons = 28;
 const int gridYButtons = 17;
 
-const double secondsPerUpdate = 2.5f;
+const double secondsPerUpdate = 0.25f;
 
 /***********  END CONSTS  ***************/
 
@@ -92,7 +94,8 @@ double elapsedTimeSinceLastUpdate = 0.0;
 SelectingMode selectingMode = SelectingMode::ClearTile;
 
 std::vector<std::vector<SelectingMode>> statusGrid;
-std::unique_ptr<Graph> graph;
+std::shared_ptr<Graph> graph;
+std::unique_ptr<IShortestPathStrategy> shortestPathStrategy;
 
 /***********  END GLOBALS  **************/
 
@@ -353,13 +356,22 @@ void createBeginButton() {
 }
 
 void update(GLFWwindow*, double dt) {
-	//TODO: just for testing
-	if (executing) {
-		executing = false;
-		btnBegin->texture() = beginTexture;
-	}
+	if (executing && shortestPathStrategy != nullptr) {
+		int step = shortestPathStrategy->step();
+		if (step == -1) {
+			shortestPathStrategy = nullptr;
+			executing = false;
+			btnBegin->texture() = beginTexture;
 
-	//TODO: Add code to step the path finding algorithm
+			std::cout << "End" << std::endl;
+		}
+		else {
+			int x = 0;
+			int y = 0;
+			getButtonXYFromIndex(step, x, y);
+			grid->buttons()[y][x].texture() = startClickedTexture;
+		}
+	}
 }
 
 void display(GLFWwindow* window, double dt) {
@@ -602,8 +614,16 @@ void onBeginClick(Button* button) {
 		button->texture() = beginClickedTexture;
 
 		initializeGraph();
-		//TODO: start path finding algorithm
-
+		if (dijkstra) {
+			shortestPathStrategy.reset(new Dijkstra(graph, gridXButtons * gridYButtons));
+		}
+		else{
+			//TODO: add A* strategy
+			//and remove executing = false and button->texture() = beginTexture;
+			executing = false;
+			button->texture() = beginTexture;
+			shortestPathStrategy.reset(nullptr);
+		}
 	}
 }
 
