@@ -52,15 +52,19 @@ void AStar::relaxEdge(int u, int v) {
 
 		_weightsFromStart[v] = newWeightFromStart;
 
+		//create and insert the min heap element
 		MinHeap::ElementType e;
 		e.first = newWeightWithHeuristic;
 		e.second = &_graph->nodes()[v];
 		_minHeap.insert(e);
+
+		// and update parents
+		_parents[v] = u;
 	}
 	else if (vWeightFromStart> newWeightFromStart) {
 		_weightsFromStart[v] = newWeightFromStart;
-
 		_minHeap.decreaseKey(_graph->nodes()[v].heapIndex, newWeightWithHeuristic);
+		_parents[v] = u;
 	}
 }
 

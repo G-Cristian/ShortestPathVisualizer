@@ -13,7 +13,7 @@ class Dijkstra :
 {
 public:
 	Dijkstra(std::shared_ptr<Graph> graph, size_t capacity) :
-		IShortestPathStrategy(),
+		IShortestPathStrategy(capacity),
 		_graph(graph),
 		_minHeap(capacity),
 		_weightsFromStart(capacity, -1.0f){

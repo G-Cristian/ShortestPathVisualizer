@@ -51,9 +51,13 @@ void Dijkstra::relaxEdge(int u, int v) {
 		e.first = newVWeight;
 		e.second = &_graph->nodes()[v];
 		_minHeap.insert(e);
+
+		// and update parents
+		_parents[v] = u;
 	}
 	else if(_weightsFromStart[v] > newVWeight){
 		_weightsFromStart[v] = newVWeight;
 		_minHeap.decreaseKey(_graph->nodes()[v].heapIndex, newVWeight);
+		_parents[v] = u;
 	}
 }

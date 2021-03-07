@@ -133,6 +133,7 @@ int getTopAdjacentButtonIndex(int x, int y);
 int getBottomAdjacentButtonIndex(int x, int y);
 int getLeftAdjacentButtonIndex(int x, int y);
 int getRightAdjacentButtonIndex(int x, int y);
+void drawPath(const std::vector<int>& parents);
 
 /**********  END FUNCTIONS  *************/
 
@@ -360,6 +361,7 @@ void update(GLFWwindow*, double dt) {
 	if (executing && shortestPathStrategy != nullptr) {
 		int step = shortestPathStrategy->step();
 		if (step == -1) {
+			drawPath(shortestPathStrategy->parents());
 			shortestPathStrategy = nullptr;
 			executing = false;
 			btnBegin->texture() = beginTexture;
@@ -717,5 +719,22 @@ int getRightAdjacentButtonIndex(int x, int y) {
 	}
 	else {
 		return getIndexFromXY(x + 1, y);
+	}
+}
+
+void drawPath(const std::vector<int>& parents) {
+	int parent = parents[graph->endNode()];
+	while (parent >= 0) {
+		int x = 0;
+		int y = 0;
+		getButtonXYFromIndex(parent, x, y);
+		if (parent == graph->startNode()) {
+			grid->buttons()[y][x].texture() = startTexture;
+			break;
+		}
+
+		grid->buttons()[y][x].texture() = endClickedTexture;
+
+		parent = parents[parent];
 	}
 }
