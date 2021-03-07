@@ -2,6 +2,7 @@
 #include <GL/glew.h>
 #include <OpenGLWrapper.h>
 
+#include "AStar.h"
 #include "Button.h"
 #include "Camera.h"
 #include "Dijkstra.h"
@@ -618,11 +619,8 @@ void onBeginClick(Button* button) {
 			shortestPathStrategy.reset(new Dijkstra(graph, gridXButtons * gridYButtons));
 		}
 		else{
-			//TODO: add A* strategy
-			//and remove executing = false and button->texture() = beginTexture;
-			executing = false;
-			button->texture() = beginTexture;
-			shortestPathStrategy.reset(nullptr);
+
+			shortestPathStrategy.reset(new AStar(graph, gridXButtons * gridYButtons));
 		}
 	}
 }
