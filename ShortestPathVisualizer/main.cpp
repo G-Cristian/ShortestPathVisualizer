@@ -42,7 +42,7 @@ const double secondsPerFrame = 1.0 / fps;
 const int gridXButtons = 28;
 const int gridYButtons = 17;
 
-const double secondsPerUpdate = 0.25f;
+const double secondsPerUpdate = 0.1f;
 
 /***********  END CONSTS  ***************/
 
